@@ -1,19 +1,36 @@
-name: 油价推送测试
+name: 每日资讯推送
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "30 23 * * *"
 
 jobs:
-  push-oil-price:
+  push:
     runs-on: ubuntu-latest
     steps:
-      - name: 推送广东今日油价
+      # 1. 每日60s早报（单独一条）
+      - name: 推送 60s早报
         run: |
-          oil=$(curl -s "https://60s.viki.moe/v2/fuel-price?region=广东")
-          p92=$(echo "$oil" | jq -r '.data.price."92"')
-          p95=$(echo "$oil" | jq -r '.data.price."95"')
-          p98=$(echo "$oil" | jq -r '.data.price."98"')
-          p0=$(echo "$oil" | jq -r '.data.price."0"')
-          updated=$(echo "$oil" | jq -r '.data.updated')
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d '{"msgtype":"text","text":{"content":"⛽ 广东今日油价（'"$updated"'）\n92#: '"$p92"' 元/升\n95#: '"$p95"' 元/升\n98#: '"$p98"' 元/升\n0#柴油: '"$p0"' 元/升"}}'
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"📰 每日60s早报\n'"$(curl -s https://60s.viki.moe/v2/60s?encoding=text)"'"}}'
+
+      # 2. AI资讯快报（单独一条）
+      - name: 推送 AI资讯
+        run: |
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"🤖 AI资讯快报\n'"$(curl -s https://60s.viki.moe/v2/ai-news?encoding=text)"'"}}'
+
+      # 3. IT实时资讯（单独一条）
+      - name: 推送 IT资讯
+        run: |
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"💻 IT实时资讯\n'"$(curl -s https://60s.viki.moe/v2/it-news?encoding=text)"'"}}'
+
+      # 4. 黄金实时行情（单独一条，已去掉金店价格）
+      - name: 推送 黄金行情
+        run: |
+          gold=$(curl -s https://60s.viki.moe/v2/gold-price?encoding=text | sed -E '/(金店|周大福|老凤祥|六福|周生生|菜百|中国黄金)/,$d' | head -15)
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"🥇 黄金实时行情\n'"$gold"'"}}'
+
+      # 5. 摸鱼日报（单独一条，已去掉进度条、统计）
+      - name: 推送 摸鱼日报
+        run: |
+          moyu=$(curl -s https://60s.viki.moe/v2/moyu?encoding=text | sed -E '/(摸鱼进度条|▏|▎|▍|▌|▋|▊|▉|=|本周|本月|本年)/d')
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"😉 摸鱼日报\n'"$moyu"'"}}'
