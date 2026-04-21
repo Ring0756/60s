@@ -10,10 +10,10 @@ jobs:
     steps:
       - name: 推送全部资讯（珠海专属）
         run: |
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"☁️ 珠海7天天气预报\n$(curl -s 'https://60s.viki.moe/v2/weather?encoding=text&query=珠海&days=7')\"}}"
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"📰 每日60s早报\n$(curl -s https://60s.viki.moe/v2/60s?encoding=text)\"}}"
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"🤖 AI资讯快报\n$(curl -s https://60s.viki.moe/v2/ai-news?encoding=text)\"}}"
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"💻 IT实时资讯\n$(curl -s https://60s.viki.moe/v2/it-news?encoding=text)\"}}"
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"🥇 黄金价格\n$(curl -s https://60s.viki.moe/v2/gold-price?encoding=text)\"}}"
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"⛽ 珠海汽油价格\n$(curl -s 'https://60s.viki.moe/v2/fuel-price?encoding=text&region=珠海')\"}}"
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"☁️ 珠海7天天气预报\n$(curl -s 'https://60s.viki.moe/v2/weather?encoding=text&query=珠海&days=7')\"}}"
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"😉 摸鱼日报\n$(curl -s https://60s.viki.moe/v2/moyu?encoding=text)\"}}"
