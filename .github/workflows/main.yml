@@ -13,5 +13,6 @@ jobs:
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"【每日资讯上篇】\n\n📰 每日60s早报\n'"$(curl -s https://60s.viki.moe/v2/60s?encoding=text)"'\n\n🤖 AI资讯快报\n'"$(curl -s https://60s.viki.moe/v2/ai-news?encoding=text)"'"}}'
       - name: 推送资讯下篇
         run: |
-          moyu=$(curl -s https://60s.viki.moe/v2/moyu?encoding=text | sed -E '/^[=▏▎▍▌▋▊▉]+$/d' | sed -E '/(本周|本月|本年)/d')
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"【每日资讯下篇】\n\n💻 IT实时资讯\n'"$(curl -s https://60s.viki.moe/v2/it-news?encoding=text)"'\n\n🥇 黄金实时行情\n'"$(curl -s https://60s.viki.moe/v2/gold-price?encoding=text | head -20)"'\n\n😉 摸鱼日报\n'"$moyu"'"}}'
+          moyu=$(curl -s https://60s.viki.moe/v2/moyu?encoding=text | sed -E '/(摸鱼进度条|▏|▎|▍|▌|▋|▊|▉|=|本周|本月|本年)/d')
+          gold=$(curl -s https://60s.viki.moe/v2/gold-price?encoding=text | sed -E '/(金店|周大福|老凤祥|六福|周生生|菜百|中国黄金)/,$d' | head -15)
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"【每日资讯下篇】\n\n💻 IT实时资讯\n'"$(curl -s https://60s.viki.moe/v2/it-news?encoding=text)"'\n\n🥇 黄金实时行情\n'"$gold"'\n\n😉 摸鱼日报\n'"$moyu"'"}}'
