@@ -8,28 +8,24 @@ jobs:
   push:
     runs-on: ubuntu-latest
     steps:
-      # 1. 每日60s早报
       - name: 推送 60s早报
         run: |
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -d '{"msgtype":"text","text":{"content":"📰 每日60s早报\n'"$(curl -s https://60s.viki.moe/v2/60s?encoding=text | sed 's/"/ /g')"'"}}'
 
-      # 2. AI资讯快报
       - name: 推送 AI资讯
         run: |
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -d '{"msgtype":"text","text":{"content":"🤖 AI资讯快报\n'"$(curl -s https://60s.viki.moe/v2/ai-news?encoding=text | sed 's/"/ /g')"'"}}'
 
-      # 3. IT实时资讯
       - name: 推送 IT资讯
         run: |
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -d '{"msgtype":"text","text":{"content":"💻 IT实时资讯\n'"$(curl -s https://60s.viki.moe/v2/it-news?encoding=text | sed 's/"/ /g')"'"}}'
 
-      # 4. 黄金实时行情
       - name: 推送 黄金行情
         run: |
           gold=$(curl -s https://60s.viki.moe/v2/gold-price?encoding=text | sed 's/"/ /g' | sed -E '/(金店|周大福|老凤祥|六福|周生生|菜百|中国黄金)/,$d' | head -15)
@@ -37,12 +33,11 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"msgtype":"text","text":{"content":"🥇 黄金实时行情\n'"$gold"'"}}'
 
-      # 5. 摸鱼日报 + 今日黄历（合并展示）
-      - name: 推送 摸鱼日报&黄历
+      - name: 推送 摸鱼日报
         run: |
           moyu=$(curl -s https://60s.viki.moe/v2/moyu?encoding=text | sed 's/"/ /g' | sed -E '/(摸鱼进度条|▏|▎|▍|▌|▋|▊|▉|=|本周|本月|本年)/d')
-          almanac=$(curl -s https://60s.viki.moe/v2/lunar?encoding=text | sed 's/"/ /g')
-          content="😉 摸鱼日报\n${moyu}\n\n📅 今日黄历\n${almanac}"
+          almanac=$(curl -s https://60s.viki.moe/v2/lunar?encoding=text | sed 's/"/ /g' | grep -E "宜|忌" | sed -E 's/[宜|忌]：//g')
+          content="😉 摸鱼日报\n${moyu}\n${almanac}"
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -d '{"msgtype":"text","text":{"content":"'"$content"'"}}'
