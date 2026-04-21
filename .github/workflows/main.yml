@@ -23,24 +23,36 @@ jobs:
         run: |
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"💻 IT实时资讯\n'"$(curl -s https://60s.viki.moe/v2/it-news?encoding=text)"'"}}'
 
-      # 4. 广东今日油价（你要的功能 ✅）
-      - name: 推送 广东今日油价
+      # 4. 珠海7天天气预报
+      - name: 推送 7天天气
         run: |
-          oil=$(curl -s "https://api.03c3.cn/api/oilPrice?area=广东")
-          p92=$(echo "$oil" | jq -r '.data."92"')
-          p95=$(echo "$oil" | jq -r '.data."95"')
-          p98=$(echo "$oil" | jq -r '.data."98"')
-          p0=$(echo "$oil" | jq -r '.data."0"')
-          date=$(echo "$oil" | jq -r '.data.date')
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"⛽ 广东今日油价（'"$date"'）\n92#: '"$p92"' 元/升\n95#: '"$p95"' 元/升\n98#: '"$p98"' 元/升\n0#柴油: '"$p0"' 元/升"}}'
+          weather=$(curl -s "https://60s.viki.moe/v2/weather?city=珠海")
+          city=$(echo "$weather" | jq -r '.data.location.name')
+          forecast=$(echo "$weather" | jq -r '.data.daily_forecast[] | "📅 " + .date + "\n天气：" + .day_condition + " ｜ 气温：" + (.min_temperature|tostring) + "°C ~ " + (.max_temperature|tostring) + "°C\n空气质量：" + .air_quality + "（AQI：" + (.aqi|tostring) + "）\n"')
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"🌤️ '"$city"' 7天天气预报\n\n'"$forecast"'"}}'
 
-      # 5. 黄金实时行情
+      # 5. 珠海今日油价 + 下次调价
+      - name: 推送 今日油价
+        run: |
+          oil=$(curl -s "https://60s.viki.moe/v2/oil?city=珠海")
+          region=$(echo "$oil" | jq -r '.data.region')
+          p92=$(echo "$oil" | jq -r '.data.items[] | select(.name=="92#汽油").price')
+          p95=$(echo "$oil" | jq -r '.data.items[] | select(.name=="95#汽油").price')
+          p98=$(echo "$oil" | jq -r '.data.items[] | select(.name=="98#汽油").price')
+          p0=$(echo "$oil" | jq -r '.data.items[] | select(.name=="0#柴油").price')
+          next_date=$(echo "$oil" | jq -r '.data.trend.next_adjustment_date')
+          direction=$(echo "$oil" | jq -r '.data.trend.direction')
+          change=$(echo "$oil" | jq -r '.data.trend.change_liter_desc')
+          updated=$(echo "$oil" | jq -r '.data.updated')
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"⛽ 广东珠海今日油价（'"$updated"'）\n92#: '"$p92"' 元/升\n95#: '"$p95"' 元/升\n98#: '"$p98"' 元/升\n0#柴油: '"$p0"' 元/升\n\n📅 下次调价：'"$next_date"'\n📉 调价：'"$direction"' '"$change"'"}}'
+
+      # 6. 黄金实时行情
       - name: 推送 黄金行情
         run: |
           gold=$(curl -s https://60s.viki.moe/v2/gold-price?encoding=text | sed -E '/(金店|周大福|老凤祥|六福|周生生|菜百|中国黄金)/,$d' | head -15)
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"🥇 黄金实时行情\n'"$gold"'"}}'
 
-      # 6. 摸鱼日报
+      # 7. 摸鱼日报
       - name: 推送 摸鱼日报
         run: |
           moyu=$(curl -s https://60s.viki.moe/v2/moyu?encoding=text | sed -E '/(摸鱼进度条|▏|▎|▍|▌|▋|▊|▉|=|本周|本月|本年)/d')
