@@ -1,11 +1,11 @@
 name: test-oil
 on:
-  workflow_dispatch
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    steps
+    steps:
       - name: Get oil price
         run: |
           oil=$(curl -s "https://60s.viki.moe/v2/oil?city=珠海")
