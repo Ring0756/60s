@@ -1,4 +1,4 @@
-name: 油价查询推送
+name: 油价推送
 on:
   workflow_dispatch:
 
@@ -6,15 +6,14 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - name: 请求接口并推送
+      - name: 获取并推送广东油价
         run: |
-          API_URL="https://www.mxnzp.com/api/oil/search?province=广东&app_id=rgihdrm0kslojqvm&app_secret=WnhrK251TWlUUThqaVFWbG5OeGQwdz09"
-          RES=$(curl -s "$API_URL")
-          p92=$(echo "$RES" | jq -r '.data.t92')
-          p95=$(echo "$RES" | jq -r '.data.t95')
-          p98=$(echo "$RES" | jq -r '.data.t98')
-          p0=$(echo "$RES" | jq -r '.data.t0')
-          time=$(echo "$RES" | jq -r '.data.updateTime')
+          oil=$(curl -s "https://60s.viki.moe/v2/fuel-price?region=广东")
+          p92=$(echo "$oil" | jq -r '.data.price."92"')
+          p95=$(echo "$oil" | jq -r '.data.price."95"')
+          p98=$(echo "$oil" | jq -r '.data.price."98"')
+          p0=$(echo "$oil" | jq -r '.data.price."0"')
+          updated=$(echo "$oil" | jq -r '.data.updated')
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
-            -d '{"msgtype":"text","text":{"content":"广东油价('"$time"')\n92#: '"$p92"'\n95#: '"$p95"'\n98#: '"$p98"'\n0#: '"$p0'"}}'
+            -d '{"msgtype":"text","text":{"content":"广东油价('"$updated"')\n92#: '"$p92"' 元/升\n95#: '"$p95"' 元/升\n98#: '"$p98"' 元/升\n0#柴油: '"$p0"' 元/升"}}'
