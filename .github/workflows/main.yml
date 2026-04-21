@@ -1,7 +1,7 @@
 name: 综合资讯早报推送
 on:
   schedule:
-    - cron: '30 23 * * *'  # 北京时间 07:30
+    - cron: '30 23 * * *'  # 北京时间 07:30（UTC时间23:30）
   workflow_dispatch:
 
 jobs:
@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: 获取并推送资讯
         run: |
-          # 1. 获取各类资讯
+          # 1. 获取各类资讯（缩进统一为2个空格）
           news=$(curl -s "https://60s.viki.moe/v2/60s?encoding=text")
           ai=$(curl -s "https://60s.viki.moe/v2/ai-news?encoding=text")
           it=$(curl -s "https://60s.viki.moe/v2/it-news?encoding=text")
@@ -18,9 +18,9 @@ jobs:
           fuel=$(curl -s "https://60s.viki.moe/v2/fuel-price?encoding=text&region=珠海")
           weather=$(curl -s "https://60s.viki.moe/v2/weather?encoding=text&query=珠海&days=7")
           moyu=$(curl -s "https://60s.viki.moe/v2/moyu?encoding=text")
-          
-          # 2. 拼接消息内容（用EOF避免多行解析错误）
-          content=$(cat <<EOF
+
+          # 2. 拼接消息（EOF必须与cat命令缩进对齐，不能有多余空格）
+          content=$(cat <<'EOF'
 📰 每日60s早报
 $news
 
@@ -42,12 +42,11 @@ $weather
 😉 摸鱼日报
 $moyu
 EOF
-          )
-          
+)
           # 3. 转义双引号，防止JSON报错
           content=$(echo "$content" | sed 's/"/\\"/g')
-          
-          # 4. 发送到企业微信
+
+          # 4. 发送到企业微信（curl换行符\后面不能有任何空格）
           curl -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"$content\"}}"
