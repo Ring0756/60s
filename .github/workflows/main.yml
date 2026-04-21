@@ -1,52 +1,19 @@
 name: 综合资讯早报推送
 on:
   schedule:
-    - cron: '30 23 * * *'  # 北京时间 07:30（UTC时间23:30）
+    - cron: '30 23 * * *'
   workflow_dispatch:
 
 jobs:
   push:
     runs-on: ubuntu-latest
     steps:
-      - name: 获取并推送资讯
+      - name: 推送全部资讯
         run: |
-          # 1. 获取各类资讯（缩进统一为2个空格）
-          news=$(curl -s "https://60s.viki.moe/v2/60s?encoding=text")
-          ai=$(curl -s "https://60s.viki.moe/v2/ai-news?encoding=text")
-          it=$(curl -s "https://60s.viki.moe/v2/it-news?encoding=text")
-          gold=$(curl -s "https://60s.viki.moe/v2/gold-price?encoding=text")
-          fuel=$(curl -s "https://60s.viki.moe/v2/fuel-price?encoding=text&region=珠海")
-          weather=$(curl -s "https://60s.viki.moe/v2/weather?encoding=text&query=珠海&days=7")
-          moyu=$(curl -s "https://60s.viki.moe/v2/moyu?encoding=text")
-
-          # 2. 拼接消息（EOF必须与cat命令缩进对齐，不能有多余空格）
-          content=$(cat <<'EOF'
-📰 每日60s早报
-$news
-
-🤖 AI资讯快报
-$ai
-
-💻 IT实时资讯
-$it
-
-🥇 黄金价格
-$gold
-
-⛽ 珠海汽油价格
-$fuel
-
-☁️ 珠海7天天气预报
-$weather
-
-😉 摸鱼日报
-$moyu
-EOF
-)
-          # 3. 转义双引号，防止JSON报错
-          content=$(echo "$content" | sed 's/"/\\"/g')
-
-          # 4. 发送到企业微信（curl换行符\后面不能有任何空格）
-          curl -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"$content\"}}"
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"📰 每日60s早报\n$(curl -s https://60s.viki.moe/v2/60s?encoding=text)\"}}"
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"🤖 AI资讯快报\n$(curl -s https://60s.viki.moe/v2/ai-news?encoding=text)\"}}"
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"💻 IT实时资讯\n$(curl -s https://60s.viki.moe/v2/it-news?encoding=text)\"}}"
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"🥇 黄金价格\n$(curl -s https://60s.viki.moe/v2/gold-price?encoding=text)\"}}"
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"⛽ 珠海汽油价格\n$(curl -s https://60s.viki.moe/v2/fuel-price?encoding=text&region=珠海)\"}}"
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"☁️ 珠海7天天气预报\n$(curl -s https://60s.viki.moe/v2/weather?encoding=text&query=珠海&days=7)\"}}"
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"😉 摸鱼日报\n$(curl -s https://60s.viki.moe/v2/moyu?encoding=text)\"}}"
