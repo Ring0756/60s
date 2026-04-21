@@ -8,10 +8,9 @@ jobs:
   push:
     runs-on: ubuntu-latest
     steps:
-      - name: 推送第一条资讯
+      - name: 推送资讯上篇
         run: |
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"【每日资讯上篇】\n\n📰 每日60s早报\n'"$(curl -s https://60s.viki.moe/v2/60s?encoding=text)"'\n\n🤖 AI资讯快报\n'"$(curl -s https://60s.viki.moe/v2/ai-news?encoding=text)"'\n\n💻 IT实时资讯\n'"$(curl -s https://60s.viki.moe/v2/it-news?encoding=text)"'"}}'
-      - name: 推送第二条资讯 
-        run: |    
-          gold=$(curl -s https://60s.viki.moe/v2/gold-price?encoding=text | sed -n '/贵金属（更新时间/,/贵金属期货/p' | sed '$d')
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"【每日资讯下篇】\n\n🥇 黄金实时行情\n'"$gold"'\n\n😉 摸鱼日报\n'"$(curl -s https://60s.viki.moe/v2/moyu?encoding=text)"'"}}
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"【每日资讯】\n\n📰 每日60s早报\n'"$(curl -s https://60s.viki.moe/v2/60s?encoding=text)"'\n\n🤖 AI资讯快报\n'"$(curl -s https://60s.viki.moe/v2/ai-news?encoding=text)"'\n\n💻 IT实时资讯\n'"$(curl -s https://60s.viki.moe/v2/it-news?encoding=text)"'"}}'
+      - name: 推送资讯下篇
+        run: |
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"\n🥇 黄金实时行情\n'"$(curl -s https://60s.viki.moe/v2/gold-price?encoding=text | head -20)"'\n\n😉 摸鱼日报\n'"$(curl -s https://60s.viki.moe/v2/moyu?encoding=text)"'"}}'
