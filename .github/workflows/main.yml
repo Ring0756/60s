@@ -1,21 +1,21 @@
 name: 珠海天气+油价推送
 on:
+  workflow_dispatch:
   schedule:
-    - cron: "30 23 * * *"  # 北京时间 07:30 推送
-  workflow_dispatch:  # 支持手动测试
+    - cron: "30 23 * * *"
 
 jobs:
   push:
     runs-on: ubuntu-latest
     steps:
-      - name: 推送天气和油价
+      - name: 推送数据
         run: |
-          # 获取珠海数据
-          weather=$(curl -s "https://60s.viki.moe/v2/weather?encoding=text&query=珠海&days=7")
-          fuel=$(curl -s "https://60s.viki.moe/v2/fuel-price?encoding=text&region=珠海")
-
-          # 推送天气预报
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"☁️ 珠海7天天气预报\n$weather\"}}"
+          # 推送珠海7天天气预报
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{"msgtype":"text","text":{"content":"☁️ 珠海7天天气预报\n'"$(curl -s 'https://60s.viki.moe/v2/weather?encoding=text&query=珠海&days=7')"'"}}'
           
-          # 推送汽油价格
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"⛽ 珠海汽油价格\n$fuel\"}}"
+          # 推送珠海汽油价格
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{"msgtype":"text","text":{"content":"⛽ 珠海汽油价格\n'"$(curl -s 'https://60s.viki.moe/v2/fuel-price?encoding=text&region=珠海')"'"}}'
