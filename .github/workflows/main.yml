@@ -1,21 +1,52 @@
-name: 每日60s早报文字推送
+name: 综合资讯早报推送
 on:
   schedule:
-    - cron: '30 23 * * *'
+    - cron: '30 23 * * *'  # 北京时间 07:30
   workflow_dispatch:
 
 jobs:
   push:
     runs-on: ubuntu-latest
     steps:
-      - name: 获取并发送早报文本
+      - name: 获取各类资讯并推送到企业微信
         run: |
-          content=$(curl -s "https://60s.viki.moe/v2/60s?encoding=text")
+          # 获取各类内容
+          news=$(curl -s "https://60s.viki.moe/v2/60s?encoding=text")
+          ai=$(curl -s "https://60s.viki.moe/v2/ai-news?encoding=text")
+          it=$(curl -s "https://60s.viki.moe/v2/it-news?encoding=text")
+          gold=$(curl -s "https://60s.viki.moe/v2/gold-price?encoding=text")
+          # 汽油价格接口添加 region=珠海 参数
+          fuel=$(curl -s "https://60s.viki.moe/v2/fuel-price?encoding=text&region=珠海")
+          moyu=$(curl -s "https://60s.viki.moe/v2/moyu?encoding=text")
+          # 珠海7天天气预报接口添加 query=珠海&days=7 参数
+          weather=$(curl -s "https://60s.viki.moe/v2/weather?encoding=text&query=珠海&days=7")
+
+          # 拼接完整消息
+          content="📰 每日60s早报
+$news
+
+🤖 AI资讯快报
+$ai
+
+💻 IT实时资讯
+$it
+
+🥇 黄金价格
+$gold
+
+⛽ 珠海汽油价格
+$fuel
+
+☁️ 珠海7天天气预报
+$weather
+
+😉 摸鱼日报
+$moyu"
+
+          # 转义双引号，防止JSON报错
+          content=$(echo "$content" | sed 's/"/\\"/g')
+
+          # 发送到企业微信
           curl -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
-            -d '{
-              "msgtype": "text",
-              "text": {
-                "content": "'"$content"'"
-              }
-            }'
+            -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"$content\"}}"
