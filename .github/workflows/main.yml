@@ -37,17 +37,12 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"msgtype":"text","text":{"content":"🥇 黄金实时行情\n'"$gold"'"}}'
 
-      # 5. 今日黄历（倒数第二位置）
-      - name: 推送 黄历信息
-        run: |
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d '{"msgtype":"text","text":{"content":"📅 今日黄历\n'"$(curl -s https://60s.viki.moe/v2/lunar?encoding=text | sed 's/"/ /g')"'"}}'
-
-      # 6. 摸鱼日报（最后位置）
-      - name: 推送 摸鱼日报
+      # 5. 摸鱼日报 + 今日黄历（合并展示）
+      - name: 推送 摸鱼日报&黄历
         run: |
           moyu=$(curl -s https://60s.viki.moe/v2/moyu?encoding=text | sed 's/"/ /g' | sed -E '/(摸鱼进度条|▏|▎|▍|▌|▋|▊|▉|=|本周|本月|本年)/d')
+          almanac=$(curl -s https://60s.viki.moe/v2/lunar?encoding=text | sed 's/"/ /g')
+          content="😉 摸鱼日报\n${moyu}\n\n📅 今日黄历\n${almanac}"
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
-            -d '{"msgtype":"text","text":{"content":"😉 摸鱼日报\n'"$moyu"'"}}'
+            -d '{"msgtype":"text","text":{"content":"'"$content"'"}}'
