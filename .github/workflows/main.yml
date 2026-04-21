@@ -1,29 +1,29 @@
-name: 每日60s早报(图片版)推送到企业微信
+name: 60s早报图片推送企业微信
 on:
   schedule:
-    - cron: "30 23 * * *"  # 北京时间7:30
-  workflow_dispatch:      # 手动测试
+    - cron: '30 23 * * *'
+  workflow_dispatch:
 
 jobs:
-  push:
+  send-news-image:
     runs-on: ubuntu-latest
     steps:
-      - name: 下载早报图片并推送
+      - name: 下载并发送早报图片
         run: |
-          # 1. 下载图片
-          curl -s "https://60s.viki.moe/v2/60s?encoding=image" -L -o news.png
+          # 下载图片
+          curl -L "https://60s.viki.moe/v2/60s?encoding=image" -o news.png
           
-          # 2. 转base64 + 计算md5（企业微信图片必填）
-          IMG_BASE64=$(base64 -w 0 news.png)
-          IMG_MD5=$(md5sum news.png | awk '{print $1}')
+          # 生成base64与md5
+          img_base64=$(base64 -w 0 news.png)
+          img_md5=$(md5sum news.png | awk '{print $1}')
           
-          # 3. 发送图片到企业微信
+          # 发送到企业微信
           curl -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
-          -H "Content-Type: application/json" \
-          -d "{
-            \"msgtype\":\"image\",
-            \"image\":{
-              \"base64\":\"$IMG_BASE64\",
-              \"md5\":\"$IMG_MD5\"
-            }
-          }"
+            -H "Content-Type: application/json" \
+            -d '{
+              "msgtype": "image",
+              "image": {
+                "base64": "'"$img_base64"'",
+                "md5": "'"$img_md5"'"
+              }
+            }'
