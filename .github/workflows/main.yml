@@ -1,36 +1,20 @@
-name: 每日资讯推送
+name: 油价查询推送
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "30 23 * * *"
 
 jobs:
-  push:
+  run:
     runs-on: ubuntu-latest
     steps:
-      # 1. 每日60s早报（单独一条）
-      - name: 推送 60s早报
+      - name: 请求接口并推送
         run: |
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"📰 每日60s早报\n'"$(curl -s https://60s.viki.moe/v2/60s?encoding=text)"'"}}'
-
-      # 2. AI资讯快报（单独一条）
-      - name: 推送 AI资讯
-        run: |
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"🤖 AI资讯快报\n'"$(curl -s https://60s.viki.moe/v2/ai-news?encoding=text)"'"}}'
-
-      # 3. IT实时资讯（单独一条）
-      - name: 推送 IT资讯
-        run: |
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"💻 IT实时资讯\n'"$(curl -s https://60s.viki.moe/v2/it-news?encoding=text)"'"}}'
-
-      # 4. 黄金实时行情（单独一条，已去掉金店价格）
-      - name: 推送 黄金行情
-        run: |
-          gold=$(curl -s https://60s.viki.moe/v2/gold-price?encoding=text | sed -E '/(金店|周大福|老凤祥|六福|周生生|菜百|中国黄金)/,$d' | head -15)
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"🥇 黄金实时行情\n'"$gold"'"}}'
-
-      # 5. 摸鱼日报（单独一条，已去掉进度条、统计）
-      - name: 推送 摸鱼日报
-        run: |
-          moyu=$(curl -s https://60s.viki.moe/v2/moyu?encoding=text | sed -E '/(摸鱼进度条|▏|▎|▍|▌|▋|▊|▉|=|本周|本月|本年)/d')
-          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d '{"msgtype":"text","text":{"content":"😉 摸鱼日报\n'"$moyu"'"}}'
+          API_URL="https://www.mxnzp.com/api/oil/search?province=广东&app_id=rgihdrm0kslojqvm&app_secret=WnhrK251TWlUUThqaVFWbG5OeGQwdz09"
+          RES=$(curl -s "$API_URL")
+          p92=$(echo "$RES" | jq -r '.data.t92')
+          p95=$(echo "$RES" | jq -r '.data.t95')
+          p98=$(echo "$RES" | jq -r '.data.t98')
+          p0=$(echo "$RES" | jq -r '.data.t0')
+          time=$(echo "$RES" | jq -r '.data.updateTime')
+          curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{"msgtype":"text","text":{"content":"广东油价('"$time"')\n92#: '"$p92"'\n95#: '"$p95"'\n98#: '"$p98"'\n0#: '"$p0'"}}'
