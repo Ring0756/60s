@@ -1,25 +1,19 @@
-name: 油价测试（绝对准确版）
+name: 油价推送测试
 on:
   workflow_dispatch:
 
 jobs:
-  test:
+  push-oil-price:
     runs-on: ubuntu-latest
     steps:
-      - name: 获取并推送广东油价
+      - name: 推送广东今日油价
         run: |
-          # 1. 获取最新油价（国内接口，数据准、速度快）
-          oil=$(curl -s "https://api.tianqi.com/oilprice?area=广东")
-          
-          # 2. 解析 JSON 数据（提取准确的 92/95/0 号价格）
-          # 注意：该接口价格字段在 data 下，用 jq 精准解析
-          p92=$(echo "$oil" | jq -r '.data[] | select(.name=="92#汽油").price')
-          p95=$(echo "$oil" | jq -r '.data[] | select(.name=="95#汽油").price')
-          p98=$(echo "$oil" | jq -r '.data[] | select(.name=="98#汽油").price')
-          p0=$(echo "$oil" | jq -r '.data[] | select(.name=="0#柴油").price')
-          update_time=$(echo "$oil" | jq -r '.update_time')
-
-          # 3. 拼接并推送（用双引号包裹，彻底避免引号逃逸报错）
+          oil=$(curl -s "https://60s.viki.moe/v2/fuel-price?region=广东")
+          p92=$(echo "$oil" | jq -r '.data.price."92"')
+          p95=$(echo "$oil" | jq -r '.data.price."95"')
+          p98=$(echo "$oil" | jq -r '.data.price."98"')
+          p0=$(echo "$oil" | jq -r '.data.price."0"')
+          updated=$(echo "$oil" | jq -r '.data.updated')
           curl -s -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
-            -d "{\"msgtype\":\"text\",\"text\":{\"content\":\"⛽ 广东今日油价（$update_time）\\n92#: $p92 元/升\\n95#: $p95 元/升\\n98#: $p98 元/升\\n0#柴油: $p0 元/升\"}}"
+            -d '{"msgtype":"text","text":{"content":"⛽ 广东今日油价（'"$updated"'）\n92#: '"$p92"' 元/升\n95#: '"$p95"' 元/升\n98#: '"$p98"' 元/升\n0#柴油: '"$p0"' 元/升"}}'
