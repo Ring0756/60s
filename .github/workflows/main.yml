@@ -1,25 +1,23 @@
-name: 推送60s早报到企业微信
+name: 每日60s早报推送到企业微信
 on:
   schedule:
-    - cron: "30 23 * * *"  # 每天北京时间 7:30 自动推送
-  workflow_dispatch:      # 支持手动点击测试
+    - cron: "30 23 * * *"
+  workflow_dispatch:
 
 jobs:
-  push-news:
+  push:
     runs-on: ubuntu-latest
     steps:
-      - name: 推送早报到企业微信
+      - name: 直接获取并推送
         run: |
-          # 1. 获取早报内容
-          content=$(curl -s https://60s.rongyu0756.workers.dev/)
-          # 2. 转义内容中的双引号，避免JSON格式错误
-          escaped_content=$(echo "$content" | sed 's/"/\\"/g')
-          # 3. 发送到企业微信
-          curl -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "msgtype": "text",
-            "text": {
-              "content": "📰 每日60s早报\n'"$escaped_content"'"
-            }
-          }'
+          # 获取Markdown内容
+          CONTENT=$(curl -s "https://60s-api.viki.moe/v2/60s?type=markdown")
+          
+          # 转义双引号，避免JSON格式错误
+          ESCAPED_CONTENT=$(echo "$CONTENT" | sed 's/"/\\"/g')
+          
+          # 拼接标题（企业微信Markdown格式）
+          FINAL_CONTENT="### 📰 每日60s早报\n$ESCAPED_CONTENT"
+          
+          # 发送到企业微信（纯单行curl命令，无任何缩进问题）
+          curl -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"markdown\",\"markdown\":{\"content\":\"$FINAL_CONTENT\"}}"
