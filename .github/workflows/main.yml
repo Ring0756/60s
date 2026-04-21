@@ -1,23 +1,29 @@
-name: 每日60s早报推送到企业微信
+name: 每日60s早报(图片版)推送到企业微信
 on:
   schedule:
-    - cron: "30 23 * * *"
-  workflow_dispatch:
+    - cron: "30 23 * * *"  # 北京时间7:30
+  workflow_dispatch:      # 手动测试
 
 jobs:
   push:
     runs-on: ubuntu-latest
     steps:
-      - name: 直接获取并推送
+      - name: 下载早报图片并推送
         run: |
-          # 获取Markdown内容
-          CONTENT=$(curl -s "https://60s-api.viki.moe/v2/60s?type=markdown")
+          # 1. 下载图片
+          curl -s "https://60s.viki.moe/v2/60s?encoding=image" -L -o news.png
           
-          # 转义双引号，避免JSON格式错误
-          ESCAPED_CONTENT=$(echo "$CONTENT" | sed 's/"/\\"/g')
+          # 2. 转base64 + 计算md5（企业微信图片必填）
+          IMG_BASE64=$(base64 -w 0 news.png)
+          IMG_MD5=$(md5sum news.png | awk '{print $1}')
           
-          # 拼接标题（企业微信Markdown格式）
-          FINAL_CONTENT="### 📰 每日60s早报\n$ESCAPED_CONTENT"
-          
-          # 发送到企业微信（纯单行curl命令，无任何缩进问题）
-          curl -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" -H "Content-Type: application/json" -d "{\"msgtype\":\"markdown\",\"markdown\":{\"content\":\"$FINAL_CONTENT\"}}"
+          # 3. 发送图片到企业微信
+          curl -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"msgtype\":\"image\",
+            \"image\":{
+              \"base64\":\"$IMG_BASE64\",
+              \"md5\":\"$IMG_MD5\"
+            }
+          }"
