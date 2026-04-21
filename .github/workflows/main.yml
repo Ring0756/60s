@@ -1,29 +1,21 @@
-name: 60s早报图片推送企业微信
+name: 每日60s早报文字推送
 on:
   schedule:
     - cron: '30 23 * * *'
   workflow_dispatch:
 
 jobs:
-  send-news-image:
+  push:
     runs-on: ubuntu-latest
     steps:
-      - name: 下载并发送早报图片
+      - name: 获取并发送早报文本
         run: |
-          # 下载图片
-          curl -L "https://60s.viki.moe/v2/60s?encoding=image" -o news.png
-          
-          # 生成base64与md5
-          img_base64=$(base64 -w 0 news.png)
-          img_md5=$(md5sum news.png | awk '{print $1}')
-          
-          # 发送到企业微信
+          content=$(curl -s "https://60s.viki.moe/v2/60s?encoding=text")
           curl -X POST "${{ secrets.WEWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -d '{
-              "msgtype": "image",
-              "image": {
-                "base64": "'"$img_base64"'",
-                "md5": "'"$img_md5"'"
+              "msgtype": "text",
+              "text": {
+                "content": "'"$content"'"
               }
             }'
